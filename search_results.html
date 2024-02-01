@@ -1,0 +1,34 @@
+<!-- templates/search_results.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results for "{{ search_query }}"</h1>
+    
+    {% if search_results %}
+        <ul>
+            {% for result in search_results %}
+                <li>
+                    <h2>{{ result['title'] }}</h2>
+                    {% if result['image_path'] %}
+                        <img src="{{ url_for('static', filename='uploads/' + result['image_path']) }}" alt="{{ result['title'] }}">
+                    {% endif %}
+                    <p>{{ result['content'] }}</p>
+                    {% if result['hashtags'] %}
+                        <p>Hashtags: {% for tag in result['hashtags'] %}#{{ tag }} {% endfor %}</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+    
+    <a href="{{ url_for('home') }}">Back to Home</a>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>protalk</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        .post-container {
+            display: flex;
+            flex-direction: row;  /* 왼쪽에서 오른쪽으로 나열하도록 변경 */
+            align-items: center;
+            flex-wrap: wrap;  /* 여러 행에 걸쳐 나열되도록 허용 */
+        }
+
+        .post {
+            border: 1px solid #ccc;
+            margin: 10px;
+            padding: 10px;
+            max-width: 230px;  /* 원하는 최대 너비로 설정 */
+            position: relative;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .hashtags {
+            color: #666;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            color: red;
+        }
+
+        .search-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            margin: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 5px;
+            margin-right: 5px;
+        }
+
+        .search-button {
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>protalk</h1>
+
+    <!-- 글 작성 폼 -->
+    <form id="write-form" action="/write" method="post" enctype="multipart/form-data">
+        <label for="title" class="write-input">제목:</label>
+        <input type="text" name="title" required>
+        <br>
+        <label for="content" class="write-input">내용:</label>
+        <textarea name="content" required></textarea>
+        <br>
+        <label for="file" class="write-input">사진 업로드:</label>
+        <input type="file" name="file" accept="image/*">
+        <br>
+        <label for="hashtags" class="write-input">해시태그:</label>
+        <input type="text" name="hashtags">
+        <br>
+        <input type="submit" value="글 작성">
+    </form>
+
+
+    <!-- 게시물 목록 -->
+    <div class="post-container">
+        {% for post in posts %}
+            <div class="post">
+                <h2>{{ post['title'] }}</h2>
+                {% if post['image_path'] %}
+                    <img src="{{ url_for('static', filename='uploads/' + post['image_path']) }}" alt="{{ post['title'] }}">
+                {% endif %}
+                <p>{{ post['content'] }}</p>
+                {% if post['hashtags'] %}
+                    <p class="hashtags">해시태그: {% for hashtag in post['hashtags'] %} #{{ hashtag }}{% endfor %}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <button class="write-button" onclick="toggleWriteForm()">글 작성하기</button>
+
+    <style>
+        .write-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 999; /* 다른 요소들 위에 표시되도록 설정 */
+        }
+    </style>
+
+    <script>
+        // 페이지 로드 시 저장된 게시물 데이터 불러오기
+        window.onload = function () {
+            var storedPosts = localStorage.getItem('posts');
+            if (storedPosts) {
+                document.body.innerHTML += storedPosts;
+            }
+        };
+
+        // 글 작성 폼 토글 기능
+        function toggleWriteForm() {
+            var writeForm = document.getElementById('write-form');
+            if (writeForm.style.display === 'none') {
+                writeForm.style.display = 'block';
+            } else {
+                writeForm.style.display = 'none';
+            }
+        }
+
+        // 글 작성 및 삭제 기능 (이전 코드와 동일)
+        // ...
+
+    </script>
+
+
+<!-- 검색 기능 -->
+<div class="search-bar">
+    <label for="search">검색:</label>
+    <input type="text" name="search" class="search-input">
+    <button type="button" onclick="searchPosts()">검색</button>
+</div>
+
+<!-- 검색 결과를 표시할 영역 추가 -->
+<!-- 검색 결과를 표시할 영역 추가 -->
+<div id="search-results" class="post-container">
+    {% if search_query %}
+        <h3>검색 결과 ( '{{ search_query }}'에 대한 검색)</h3>
+    {% endif %}
+    {% for post in search_results %}
+        <div class="post">
+            <h2>{{ post['title'] }}</h2>
+            {% if post['image_path'] %}
+                <img src="{{ url_for('static', filename='uploads/' + post['image_path']) }}" alt="{{ post['title'] }}">
+            {% endif %}
+            <p>{{ post['content'] }}</p>
+            {% if post['hashtags'] %}
+                <p class="hashtags">해시태그: {% for hashtag in post['hashtags'] %} #{{ hashtag }}{% endfor %}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<div id="search-results" class="post-container"></div>
+
+<script>
+    // 검색 기능을 위한 자바스크립트 함수
+    function searchPosts() {
+        var searchInput = document.querySelector('.search-input').value;
+
+        // 검색어가 비어있는 경우 아무 동작하지 않음
+        if (!searchInput.trim()) {
+            return;
+        }
+
+        // 서버에 검색 요청
+        fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'keyword=' + encodeURIComponent(searchInput),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 검색 결과를 화면에 표시
+            displaySearchResults(data.posts);
+        })
+        .catch(error => console.error('Error during search:', error));
+    }
+
+    // 검색 결과를 화면에 표시하는 함수
+    function displaySearchResults(posts) {
+        var searchResultsContainer = document.getElementById('search-results');
+        searchResultsContainer.innerHTML = '';  // 기존 검색 결과 삭제
+
+        posts.forEach(post => {
+            var postElement = createPostElement(post);
+            searchResultsContainer.appendChild(postElement);
+        });
+    }
+
+    // 기존 게시물을 화면에 표시하는 함수 (이미지 경로 등을 생성하는 부분은 함수로 분리)
+    function createPostElement(post) {
+        var postElement = document.createElement('div');
+        postElement.className = 'post';
+
+        var titleElement = document.createElement('h2');
+        titleElement.textContent = post['title'];
+        postElement.appendChild(titleElement);
+
+        if (post['image_path']) {
+            var imgElement = document.createElement('img');
+            imgElement.src = "{{ url_for('static', filename='uploads/') }}" + post['image_path'];
+            imgElement.alt = post['title'];
+            postElement.appendChild(imgElement);
+        }
+
+        var contentElement = document.createElement('p');
+        contentElement.textContent = post['content'];
+        postElement.appendChild(contentElement);
+
+        if (post['hashtags']) {
+            var hashtagsElement = document.createElement('p');
+            hashtagsElement.className = 'hashtags';
+            hashtagsElement.textContent = '해시태그: ' + post['hashtags'].join(' ');
+            postElement.appendChild(hashtagsElement);
+        }
+
+        return postElement;
+    }
+</script>
+
+</body>
+</html>

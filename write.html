@@ -1,0 +1,31 @@
+<!-- templates/write.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글 작성</title>
+</head>
+<body>
+    <h1>글 작성</h1>
+    <form action="{{ url_for('write') }}" method="POST" enctype="multipart/form-data">
+        <label for="title">제목:</label>
+        <input type="text" id="title" name="title" required><br>
+
+        <label for="content">내용:</label>
+        <textarea id="content" name="content" required></textarea><br>
+
+        <label for="file">이미지 업로드:</label>
+        <input type="file" id="file" name="file" accept="image/*"><br>
+
+        <!-- 해시태그 입력 -->
+        <label for="hashtags">해시태그 (쉼표로 구분):</label>
+        <input type="text" id="hashtags" name="hashtags"><br>
+
+        <input type="submit" value="글 올리기">
+    </form>
+    <br>
+    <a href="{{ url_for('home') }}">홈으로 돌아가기</a>
+</body>
+</html>
